@@ -1,0 +1,23 @@
+1) Admin
+
+To Build Admin Build Release :- flutter build apk --release -t lib/main-upgradedenterprise.dart --no-tree-shake-icons
+To Build Admin Build Debug   :- flutter build apk --debug -t lib/main-upgradedenterprise.dart --no-tree-shake-icons
+To Run Admin Build Release   :- flutter run --release -t lib/main-upgradedenterprise.dart
+To Run Admin Build Debug     :- flutter run --debug -t lib/main-upgradedenterprise.dart
+To Build Admin Build Web Release :- flutter build web --release -t lib/main-admin.dart --no-tree-shake-icons --web-renderer canvaskit
+To Run Admin Build Web Release :- flutter run -d chrome --release -t lib/main-admin.dart
+To Rub Admin Web Server :- flutter run -d web-server --web-port 8080 --web-hostname 0.0.0.0 -t lib/main-admin.dart --web-renderer canvaskit
+
+2) Student
+
+To Build Student Build Release :- flutter build apk --release -t lib/main.dart --no-tree-shake-icons
+To Build Student Build Debug   :- flutter build apk --debug -t lib/main.dart --no-tree-shake-icons
+To Build Student ios Build Release :- flutter build ios --release -t lib/main.dart --no-tree-shake-icons
+To Run Student Build Release   :- flutter run --release -t lib/main.dart
+To Run Student Build Debug     :- flutter run --debug -t lib/main.dart
+To Build Student Build Web Release :- flutter build web --release -t lib/main.dart --no-tree-shake-icons --web-renderer canvaskit
+To Run Student Build Web Release :- flutter run -d chrome --release -t lib/main.dart
+To Rub Student Web Server :- flutter run -d web-server --web-port 8080 --web-hostname 0.0.0.0 -t lib/main.dart --web-renderer canvaskit
+
+
+firebase hosting:channel:deploy preview_name

@@ -86,7 +86,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                    borderRadius: BorderRadius.circular(5)
                  ),
                  child: Image.asset(
-                   "images/logo.png",
+                   "assets/images/logo.png",
                    // color: themeData.primaryColor,
                    width: 580,
                    height: 480,
