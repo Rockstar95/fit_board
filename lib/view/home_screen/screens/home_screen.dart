@@ -7,6 +7,8 @@ import 'package:fit_board/utils/extensions.dart';
 import 'package:fit_board/utils/my_print.dart';
 import 'package:fit_board/utils/my_toast.dart';
 import 'package:fit_board/utils/my_utils.dart';
+import 'package:fit_board/utils/parsing_helper.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -57,15 +59,61 @@ class _HomeScreenState extends State<HomeScreen> {
     MyUtils.copyToClipboard(context, boardModel.data);
   }
 
-  void onUpdateBoardDataTap({required BoardModel boardModel, required String newText}) {
+  void onUpdateBoardDataTap({required BoardModel boardModel, required String newText, bool isAppend = false}) {
     MyPrint.printOnConsole("onBoardCopyTap called for Board Id:${boardModel.id}");
 
-    if(boardModel.data == newText) return;
+    if(!isAppend && boardModel.data == newText) return;
 
-    BoardModel newBoardModel = boardModel.updateUserData(data: newText);
+    String finalText = "";
+    if(isAppend) {
+      finalText = "${boardModel.data}\n$newText";
+    }
+    else {
+      finalText = newText;
+    }
+    BoardModel newBoardModel = boardModel.updateUserData(data: finalText);
 
     boardController.updateBoardData({newBoardModel.id : newBoardModel});
     newBoardModel.textEditingController.clear();
+  }
+
+  Future<void> resetBoardData() async {
+    dynamic response = await showCupertinoDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return CupertinoAlertDialog(
+          title: const Text("Reset Boards"),
+          content: const Text("Are you sure you want to reset boards?"),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
+              child: const Text("Cancel"),
+            ),
+            CupertinoDialogAction(
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+              child: const Text(
+                "Reset",
+                style: TextStyle(
+                  color: Colors.red
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+    MyPrint.printOnConsole("response:$response");
+
+    bool isReset = ParsingHelper.parseBoolMethod(response);
+    MyPrint.printOnConsole("isReset:$isReset");
+
+    if(isReset) {
+      boardController.resetBoardsData();
+    }
   }
 
   @override
@@ -89,6 +137,10 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (BuildContext context, BoardProvider boardProvider, Widget? child) {
           String selectedBoardId = boardProvider.selectedBoard;
 
+          if(boardProvider.boardsIdsList.isEmpty) {
+            return const Center(child: Text("No Boards Available"),);
+          }
+
           return Row(
             children: [
               getBoardSelectionSidebar(provider: boardProvider),
@@ -107,10 +159,17 @@ class _HomeScreenState extends State<HomeScreen> {
       title: const Text("Boards"),
       leading: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
-        child: Image.asset(
-          "assets/images/logo.png",
-          width: 500,
-          height: 300,
+        child: GestureDetector(
+          onTap: () {
+            if(AppController().isAdminApp) {
+              resetBoardData();
+            }
+          },
+          child: Image.asset(
+            "assets/images/logo.png",
+            width: 500,
+            height: 300,
+          ),
         ),
       ),
       leadingWidth: 200,
@@ -120,24 +179,23 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget getBoardSelectionSidebar({required BoardProvider provider}) {
     List<String> boardIds = provider.boardsIdsList;
     Map<String, BoardModel> boardMap = provider.boardsMap;
-    if(boardIds.isEmpty) return const Center(child: Text("No Boards Available"),);
 
     return SizedBox(
-        width: 200,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: boardIds.map((String boardId) {
-            BoardModel? boardModel = boardMap[boardId];
+      width: 200,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: boardIds.map((String boardId) {
+          BoardModel? boardModel = boardMap[boardId];
 
-            if(boardModel != null) {
-              return getBoardNameCard(boardModel: boardModel, isSelected: provider.selectedBoard == boardId);
-            }
-            else {
-              return const SizedBox();
-            }
-          }).toList(),
-        ),
-      );
+          if(boardModel != null) {
+            return getBoardNameCard(boardModel: boardModel, isSelected: provider.selectedBoard == boardId);
+          }
+          else {
+            return const SizedBox();
+          }
+        }).toList(),
+      ),
+    );
   }
 
   Widget getBoardNameCard({required BoardModel boardModel, bool isSelected = false}) {
@@ -175,6 +233,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  //region Selected Board Section
   Widget getSelectedBoardWidget({BoardModel? boardModel}) {
     if(boardModel == null) return const SizedBox();
 
@@ -213,35 +272,62 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ) : const Center(child: Text("Nothing on the board"),),
           ),
-          if(AppController().isAdminApp) TextField(
-            controller: boardModel.textEditingController,
-            onSubmitted: (String text) {
-              MyPrint.printOnConsole("onSubmitted called with text:'$text'");
-            },
-            minLines: 5,
-            maxLines: 10,
-            keyboardType: TextInputType.multiline,
-            decoration: InputDecoration(
-              hintText: "Enter Code",
-              border: OutlineInputBorder(
-                borderSide: BorderSide(color: themeData.backgroundColor),
-              ),
-              suffixIcon: Container(
-                margin: const EdgeInsets.only(right: 20),
-                child: IconButton(
-                  onPressed: () {
-                    onUpdateBoardDataTap(boardModel: boardModel, newText: boardModel.textEditingController.text);
-                  },
-                  icon: const Icon(Icons.send),
-                  splashRadius: 25,
-                ),
-              ),
-            ),
-          ),
+          getTextField(boardModel: boardModel),
         ],
       ),
     );
   }
+
+  Widget getTextField({required BoardModel boardModel}) {
+    if(!AppController().isAdminApp) return const SizedBox();
+
+    return TextField(
+      controller: boardModel.textEditingController,
+      onSubmitted: (String text) {
+        MyPrint.printOnConsole("onSubmitted called with text:'$text'");
+      },
+      minLines: 5,
+      maxLines: 10,
+      keyboardType: TextInputType.multiline,
+      decoration: InputDecoration(
+        hintText: "Enter Code",
+        border: OutlineInputBorder(
+          borderSide: BorderSide(color: themeData.backgroundColor),
+        ),
+        suffixIcon: Container(
+          width: 150,
+          margin: const EdgeInsets.only(right: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              BorderedButton(
+                onTap: () {
+                  onUpdateBoardDataTap(boardModel: boardModel, newText: boardModel.textEditingController.text, isAppend: true);
+                },
+                child: const Center(child: Text("Append and Send")),
+              ),
+              const SizedBox(height: 10,),
+              BorderedButton(
+                onTap: () {
+                  onUpdateBoardDataTap(boardModel: boardModel, newText: boardModel.textEditingController.text, isAppend: false);
+                },
+                child: const Center(child: Text("Send")),
+              ),
+              /*IconButton(
+                onPressed: () {
+                  onUpdateBoardDataTap(boardModel: boardModel, newText: boardModel.textEditingController.text);
+                },
+                icon: const Icon(Icons.send),
+                splashRadius: 25,
+              ),*/
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  //endregion
 }
 
 class BoardCardWidget extends StatefulWidget {

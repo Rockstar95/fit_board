@@ -13,6 +13,6 @@ class AuthenticationController {
   }
 
   Future<bool> getIsUserLoggedInFromSharedPreferences() async {
-    return (await SharedPrefManager().getBool(SharedPreferenceVariables.isUserLoggedIn)) ?? true;
+    return (await SharedPrefManager().getBool(SharedPreferenceVariables.isUserLoggedIn)) ?? false;
   }
 }

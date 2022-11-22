@@ -1,3 +1,6 @@
+import 'package:fit_board/backend/authentication/authentication_controller.dart';
+import 'package:fit_board/utils/my_toast.dart';
+import 'package:fit_board/view/home_screen/screens/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -18,13 +21,15 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool isFirst = true, isLoading = false;
 
-  late TextEditingController mobileController;
+  late TextEditingController userNameController;
+  late TextEditingController passwordController;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
-    mobileController = TextEditingController();
+    userNameController = TextEditingController();
+    passwordController = TextEditingController();
   }
 
   @override
@@ -46,39 +51,34 @@ class _LoginScreenState extends State<LoginScreen> {
             width: 90,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
-              color: Colors.white,
+              color: themeData.backgroundColor.withOpacity(0.9),
+              border: Border.all(color: themeData.backgroundColor)
             ),
             child: SpinKitFadingCircle(color: themeData.colorScheme.primary,),
           ),
         ),
       ),
       child: Scaffold(
-        backgroundColor: themeData.colorScheme.background,
-        body: Container(
-          padding: const EdgeInsets.only(top: 0),
-          child: Column(
-            children: <Widget>[
-              Expanded(
-                child: Center(
-                  child: Form(
-                    key: _formKey,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          getLogo(),
-                          getLoginText(),
-                          getLoginText2(),
-                          getMobileTextField(),
-                          getContinueButton(),
-                          //getTermsAndConditionsLink(),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+        body: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 400),
+            // color: Colors.blue,
+            padding: const EdgeInsets.only(top: 0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  getLogo(),
+                  getLoginText(),
+                  getLoginText2(),
+                  getUserNameTextField(),
+                  getPasswordTextField(),
+                  getContinueButton(),
+                  //getTermsAndConditionsLink(),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -87,28 +87,22 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget getLogo() {
     return Container(
-      margin: EdgeInsets.only(bottom: 34),
-      width: 100,
+      margin: const EdgeInsets.only(bottom: 34),
+      width: 300,
       height: 100,
       child: Image.asset("assets/images/logo.png"),
     );
   }
 
   Widget getLoginText() {
-    return InkWell(
-      onTap: ()async{
-       // bool result= await UserController().isUserLogin(context: context,isPromt: true);
-       // MyPrint.printOnConsole("result : $result");
-      },
-      child: Container(
-        margin: const EdgeInsets.only(left: 16, right: 16),
-        child: Center(
-          child: Text(
-            "Log In",
-            style: AppTheme.getTextStyle(
-                themeData.textTheme.headline5!,
-                fontWeight: FontWeight.w700,
-            ),
+    return Container(
+      margin: const EdgeInsets.only(left: 16, right: 16),
+      child: Center(
+        child: Text(
+          "Log In",
+          style: AppTheme.getTextStyle(
+              themeData.textTheme.headline5!,
+              fontWeight: FontWeight.w700,
           ),
         ),
       ),
@@ -132,85 +126,98 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget getMobileTextField() {
+  Widget getUserNameTextField() {
     return Container(
       margin: const EdgeInsets.only(left: 24, right: 24, top: 36),
-      child: Container(
-        decoration: BoxDecoration(
-          color: themeData.cardTheme.color,
-          borderRadius: const BorderRadius.all(Radius.circular(16)),
-          boxShadow: [
-            BoxShadow(
-                blurRadius: 8.0,
-                color: themeData.cardTheme.shadowColor?.withAlpha(25) ?? themeData.backgroundColor,
-                offset: const Offset(0, 3),
-            ),
-          ],
+      child: TextFormField(
+        controller: userNameController,
+        style: AppTheme.getTextStyle(
+            themeData.textTheme.bodyText1!,
+            letterSpacing: 0.1,
+            color: themeData.colorScheme.onBackground,
+            fontWeight: FontWeight.w500,
         ),
-        child: TextFormField(
-          controller: mobileController,
-          style: AppTheme.getTextStyle(
-              themeData.textTheme.bodyText1!,
-              letterSpacing: 0.1,
-              color: themeData.colorScheme.onBackground,
-              fontWeight: FontWeight.w500,
+        decoration: InputDecoration(
+          hintText: "Enter Username",
+          border: OutlineInputBorder(
+              borderRadius: const BorderRadius.all(
+                Radius.circular(8.0),
+              ),
+              borderSide: BorderSide(color: themeData.colorScheme.onBackground),
           ),
-          decoration: InputDecoration(
-            hintText: "Enter Mobile Number",
-            prefixText: "+91 ",
-            prefixStyle: AppTheme.getTextStyle(
-                themeData.textTheme.subtitle2!,
-                letterSpacing: 0.1,
-                color: themeData.colorScheme.onBackground,
-                fontWeight: FontWeight.w500,
-            ),
-            border: OutlineInputBorder(
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(8.0),
-                ),
-                borderSide: BorderSide(color: themeData.colorScheme.onBackground),
-            ),
-            enabledBorder: OutlineInputBorder(
-                borderRadius: const BorderRadius.all(Radius.circular(8.0),),
-                borderSide: BorderSide(color: themeData.colorScheme.onBackground),
-            ),
-            focusedBorder: OutlineInputBorder(
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(8.0),
-                ),
-                borderSide: BorderSide(color: themeData.colorScheme.onBackground),
-            ),
-            filled: true,
-            fillColor: themeData.colorScheme.background,
-            prefixIcon: Icon(
-              Icons.phone,
-              size: 22,
-              color: themeData.colorScheme.onBackground.withAlpha(200),
-            ),
-            isDense: true,
-            contentPadding: const EdgeInsets.all(0),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: const BorderRadius.all(Radius.circular(8.0),),
+              borderSide: BorderSide(color: themeData.colorScheme.onBackground),
           ),
-          keyboardType: TextInputType.number,
-          autofocus: false,
-          textCapitalization: TextCapitalization.sentences,
-          inputFormatters: [
-            LengthLimitingTextInputFormatter(10),
-            FilteringTextInputFormatter.digitsOnly,
-          ],
-          validator: (val) {
-            if(val?.isEmpty ?? true) {
-              return "Mobile Number Cannot be empty";
-            }
-            else {
-              if (RegExp(r"^[0-9]{10}").hasMatch(val!)) {
-                return null;
-              }
-              else {
-                return "Invalid Mobile Number";
-              }
-            }
-          },
+          focusedBorder: OutlineInputBorder(
+              borderRadius: const BorderRadius.all(
+                Radius.circular(8.0),
+              ),
+              borderSide: BorderSide(color: themeData.colorScheme.onBackground),
+          ),
+          // filled: true,
+          // fillColor: themeData.colorScheme.background,
+          // isDense: true,
+          contentPadding: const EdgeInsets.all(10),
         ),
+        keyboardType: TextInputType.name,
+        autofocus: false,
+        validator: (val) {
+          if(val?.trim().isEmpty ?? true) {
+            return "Username Cannot be empty";
+          }
+          else {
+            return null;
+          }
+        },
+      ),
+    );
+  }
+
+  Widget getPasswordTextField() {
+    return Container(
+      margin: const EdgeInsets.only(left: 24, right: 24, top: 10),
+      child: TextFormField(
+        controller: passwordController,
+        style: AppTheme.getTextStyle(
+            themeData.textTheme.bodyText1!,
+            letterSpacing: 0.1,
+            color: themeData.colorScheme.onBackground,
+            fontWeight: FontWeight.w500,
+        ),
+        decoration: InputDecoration(
+          hintText: "Enter Password",
+          border: OutlineInputBorder(
+              borderRadius: const BorderRadius.all(
+                Radius.circular(8.0),
+              ),
+              borderSide: BorderSide(color: themeData.colorScheme.onBackground),
+          ),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: const BorderRadius.all(Radius.circular(8.0),),
+              borderSide: BorderSide(color: themeData.colorScheme.onBackground),
+          ),
+          focusedBorder: OutlineInputBorder(
+              borderRadius: const BorderRadius.all(
+                Radius.circular(8.0),
+              ),
+              borderSide: BorderSide(color: themeData.colorScheme.onBackground),
+          ),
+          // filled: true,
+          // fillColor: themeData.colorScheme.background,
+          // isDense: true,
+          contentPadding: const EdgeInsets.all(10),
+        ),
+        keyboardType: TextInputType.visiblePassword,
+        autofocus: false,
+        validator: (val) {
+          if(val?.trim().isEmpty ?? true) {
+            return "Password Cannot be empty";
+          }
+          else {
+            return null;
+          }
+        },
       ),
     );
   }
@@ -247,7 +254,20 @@ class _LoginScreenState extends State<LoginScreen> {
         highlightColor: themeData.colorScheme.primary,
         splashColor: Colors.white.withAlpha(100),
         padding: const EdgeInsets.only(top: 16, bottom: 16),
-        onPressed: () {},
+        onPressed: () {
+          if(_formKey.currentState?.validate() ?? false) {
+            String userName = userNameController.text.trim();
+            String password = passwordController.text.trim();
+
+            if(userName == "meet" && password == 'admin123') {
+              AuthenticationController().setIsUserLoggedInInSharedPreferences(isLoggedIn: true);
+              Navigator.pushNamedAndRemoveUntil(context, HomeScreen.routeName, (route) => false);
+            }
+            else {
+              MyToast.showError(context: context, msg: "Wrong username and password");
+            }
+          }
+        },
         child: Stack(
           //overflow: Overflow.visible,
           clipBehavior: Clip.none,

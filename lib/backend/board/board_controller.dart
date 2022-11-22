@@ -51,9 +51,18 @@ class BoardController {
 
   Future<void> updateBoardData(Map<String, BoardModel> data) async {
     MyPrint.printOnConsole("updateBoardData called with data:$data");
+
+    if(data.isEmpty) return;
+
     await FirebaseNodes.boardDataDocumentReference.set(data.map((key, value) => MapEntry(key, value.toMap())), SetOptions(merge: true));
   }
 
+
+  Future<void> resetBoardsData() async {
+    Map<String, BoardModel> data = boardProvider.boardsMap.map((key, value) => MapEntry(key, value.updateUserData(data: '')));
+
+    await updateBoardData(data);
+  }
 
   Future<void> resetBoards() async {
     Map<String, BoardModel> data = <String, BoardModel>{};
@@ -69,6 +78,6 @@ class BoardController {
       data[boardModel.id] = boardModel;
     }
 
-    updateBoardData(data);
+    await updateBoardData(data);
   }
 }
