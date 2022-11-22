@@ -5,6 +5,7 @@ import 'package:fit_board/backend/navigation/navigation_controller.dart';
 import 'package:fit_board/model/board_model.dart';
 import 'package:fit_board/utils/extensions.dart';
 import 'package:fit_board/utils/my_print.dart';
+import 'package:fit_board/utils/my_toast.dart';
 import 'package:fit_board/utils/my_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -35,13 +36,28 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void onBoardNameChanged({required BoardModel boardModel, required String newName}) {
+    MyPrint.printOnConsole("onBoardNameChanged called for Board Id:${boardModel.id}, newName:'$newName'");
+
+    if(boardModel.displayName != newName) {
+      if(newName.isNotEmpty) {
+        BoardModel newBoardModel = boardModel.updateUserData(displayName: newName);
+
+        boardController.updateBoardData({newBoardModel.id : newBoardModel});
+      }
+      else {
+        MyToast.showError(context: context, msg: "Board Name cannot be empty");
+      }
+    }
+  }
+
   void onBoardCopyTap({required BoardModel boardModel}) {
     MyPrint.printOnConsole("onBoardCopyTap called for Board Id:${boardModel.id}");
 
     MyUtils.copyToClipboard(context, boardModel.data);
   }
 
-  void onUpdateBoardTap({required BoardModel boardModel, required String newText}) {
+  void onUpdateBoardDataTap({required BoardModel boardModel, required String newText}) {
     MyPrint.printOnConsole("onBoardCopyTap called for Board Id:${boardModel.id}");
 
     if(boardModel.data == newText) return;
@@ -127,8 +143,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget getBoardNameCard({required BoardModel boardModel, bool isSelected = false}) {
     return BoardCardWidget(
       boardModel: boardModel,
-      onBoardCardTap: onBoardCardTap,
       isSelected: isSelected,
+      onBoardCardTap: onBoardCardTap,
+      onBoardNameChanged: onBoardNameChanged,
     );
 
     return Container(
@@ -210,10 +227,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 borderSide: BorderSide(color: themeData.backgroundColor),
               ),
               suffixIcon: Container(
-                margin: EdgeInsets.only(right: 20),
+                margin: const EdgeInsets.only(right: 20),
                 child: IconButton(
                   onPressed: () {
-                    onUpdateBoardTap(boardModel: boardModel, newText: boardModel.textEditingController.text);
+                    onUpdateBoardDataTap(boardModel: boardModel, newText: boardModel.textEditingController.text);
                   },
                   icon: const Icon(Icons.send),
                   splashRadius: 25,
@@ -231,11 +248,13 @@ class BoardCardWidget extends StatefulWidget {
   final BoardModel boardModel;
   final bool isSelected;
   final void Function({required BoardModel boardModel}) onBoardCardTap;
+  final void Function({required BoardModel boardModel, required String newName}) onBoardNameChanged;
 
   const BoardCardWidget({
     Key? key,
     required this.boardModel,
     required this.onBoardCardTap,
+    required this.onBoardNameChanged,
     this.isSelected = false,
   }) : super(key: key);
 
@@ -249,8 +268,12 @@ class _BoardCardWidgetState extends State<BoardCardWidget> {
   late BoardModel boardModel;
   bool isSelected = false;
   late void Function({required BoardModel boardModel}) onBoardCardTap;
+  late void Function({required BoardModel boardModel, required String newName}) onBoardNameChanged;
 
   bool isHovered = false;
+
+  bool isNameEditingModeEnabled = false;
+  TextEditingController nameController = TextEditingController();
 
   @override
   void initState() {
@@ -258,6 +281,8 @@ class _BoardCardWidgetState extends State<BoardCardWidget> {
     boardModel = widget.boardModel;
     isSelected = widget.isSelected;
     onBoardCardTap = widget.onBoardCardTap;
+    onBoardNameChanged = widget.onBoardNameChanged;
+    nameController.text = boardModel.displayName;
   }
 
   @override
@@ -266,6 +291,8 @@ class _BoardCardWidgetState extends State<BoardCardWidget> {
       boardModel = widget.boardModel;
       isSelected = widget.isSelected;
       onBoardCardTap = widget.onBoardCardTap;
+      onBoardNameChanged = widget.onBoardNameChanged;
+      nameController.text = boardModel.displayName;
     }
     super.didUpdateWidget(oldWidget);
   }
@@ -291,6 +318,12 @@ class _BoardCardWidgetState extends State<BoardCardWidget> {
           this.isHovered = isHovered;
           setState(() {});
         },
+        onLongPress: () {
+          if(AppController().isAdminApp) {
+            isNameEditingModeEnabled = true;
+            setState(() {});
+          }
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 20),
           decoration: BoxDecoration(
@@ -299,14 +332,26 @@ class _BoardCardWidgetState extends State<BoardCardWidget> {
             ),
             borderRadius: BorderRadius.circular(AppUIConfiguration.borderRadius),
           ),
-          child: Text(
-            boardModel.displayName,
-            style: TextStyle(
-              fontSize: isSelected ? 15 : 14,
-              color: isSelected || isHovered ? Colors.blue : null,
-              fontWeight: isSelected || isHovered ? FontWeight.w600 : null,
-            ),
-          ),
+          child: isNameEditingModeEnabled
+              ? TextField(
+                  controller: nameController,
+                  onEditingComplete: () {
+                    onBoardNameChanged(boardModel: boardModel, newName: nameController.text);
+                    isNameEditingModeEnabled = false;
+                    setState(() {});
+                  },
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(borderSide: BorderSide.none),
+                  ),
+                )
+              : Text(
+                  boardModel.displayName,
+                  style: TextStyle(
+                    fontSize: isSelected ? 15 : 14,
+                    color: isSelected || isHovered ? Colors.blue : null,
+                    fontWeight: isSelected || isHovered ? FontWeight.w600 : null,
+                  ),
+                ),
         ),
       ),
     );
