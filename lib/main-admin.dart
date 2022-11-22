@@ -16,7 +16,7 @@ void main() async {
         options: DefaultFirebaseOptions.currentPlatform,
       );
 
-      AppController().isAdminApp = false;
+      AppController().isAdminApp = true;
       runApp(const MyApp());
     },
     (e, s) {
